@@ -73,6 +73,7 @@ trait Backend
     {
         if ($this->request->isPost()) {
             $params = $this->request->post("row/a");
+
             if ($params) {
                 if ($this->dataLimit && $this->dataLimitFieldAutoFill) {
                     $params[$this->dataLimitField] = $this->auth->id;
@@ -86,6 +87,20 @@ trait Backend
                     }
                     $result = $this->model->allowField(true)->save($params);
                     if ($result !== false) {
+                        if(get_class($this->model) == 'app\\admin\\model\\cms\\Archives' && isset($params['module_tags'])){
+                            if($params['module_tags']){
+                                $tagsData = [];
+                                foreach($params['module_tags'] as $tagId){
+                                    array_push($tagsData,[
+                                        'archives_id' => $this->model->id,
+                                        'tag_id' => $tagId,
+                                        'created_at' => date('Y-m-d H:i:s'),
+                                        'updated_at' => date('Y-m-d H:i:s')
+                                    ]);
+                                }
+                                db('tags_archives_data')->insertAll($tagsData);
+                            }
+                        }
                         $this->success();
                     } else {
                         $this->error($this->model->getError());
@@ -117,6 +132,7 @@ trait Backend
         }
         if ($this->request->isPost()) {
             $params = $this->request->post("row/a");
+            file_put_contents('d:/www/fastadmin/a.log', var_export($row->id,true));
             if ($params) {
                 try {
                     //是否采用模型验证
@@ -127,6 +143,21 @@ trait Backend
                     }
                     $result = $row->allowField(true)->save($params);
                     if ($result !== false) {
+                        if(get_class($this->model) == 'app\\admin\\model\\cms\\Archives' && isset($params['module_tags'])){
+                            db('tags_archives_data')->where(['archives_id' => $row->id])->delete();
+                            if($params['module_tags']){
+                                $tagsData = [];
+                                foreach($params['module_tags'] as $tagId){
+                                    array_push($tagsData,[
+                                       'archives_id' => $row->id,
+                                       'tag_id' => $tagId,
+                                       'created_at' => date('Y-m-d H:i:s'),
+                                       'updated_at' => date('Y-m-d H:i:s')
+                                    ]);
+                                }
+                                db('tags_archives_data')->insertAll($tagsData);
+                            }
+                        }
                         $this->success();
                     } else {
                         $this->error($row->getError());
